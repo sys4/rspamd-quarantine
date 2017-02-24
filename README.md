@@ -15,8 +15,10 @@ Installation
 
 We describe both supported quarantine methods supported by this script, a file based store and SQL. For the file based system, you need to create a user called quarantine:
 
+```shell
   useradd -r -m -d /var/quarantine -s /sbin/nologin -c "Rspamd quarantine" quarantine
   chmod 700 /var/quarantine
+```
 
 This will be the location, where the script stores file based emails and meta data.
 
@@ -24,8 +26,10 @@ If you want to remove older emails automatically, you can install a cron job lik
 
 As user root:
 
+```cron
   crontab -e
   @daily find /var/quarantine -xdev -type f -mtime 30 -delete
+```
 
 For SQL, please create a database user and a database and adopt the permissions properly. For the release-mail-sh script, the user should also be able to connect to the database without providing a password on the same server. If you plan to run the database server outside localhost, create a psql config file and store the password there. We do not include PGPASSWORD in the script, as this variable was declared long ago.
 
@@ -33,6 +37,7 @@ Now install the SQL tables with the script quarantine.sql
 
 For Nginx a setup could look like this:
 
+```nginx
   server {
       ... other config options ...
       location ~ /quarantine {
@@ -41,9 +46,11 @@ For Nginx a setup could look like this:
       }
   ...
   }
+```
 
 This is a sample uwsgi config, as done under Gentoo Linux. Please adopt it for your distribution:
 
+```shell
   UWSGI_SOCKET=127.0.0.1:9000
   UWSGI_THREADS=1
   UWSGI_PROCESSES=4
@@ -53,15 +60,19 @@ This is a sample uwsgi config, as done under Gentoo Linux. Please adopt it for y
   UWSGI_GROUP=quarantine
   UWSGI_EMPEROR_PIDPATH_MODE=0770
   UWSGI_EXTRA_OPTIONS="--plugin python34 --python-path /usr/local/share/rspamd --module quarantine"
+```
 
 Create the following directories:
 
+```shell
   mkdir -p /usr/local/share/rspamd
   mkdir -p /var/log/quarantine
   chown quarantine:quarantine /var/log/quarantine
+```
 
 Place the quarantine.py script in the /usr/local/share/rspamd folder. Logs go to the /var/log/quarantine/uwsgi.log file. Look for errors there. You can use the following logrotate script:
 
+```logrotate
   /var/log/quarantine/uwsgi.log {
       compress
       delaycompress
@@ -71,6 +82,7 @@ Place the quarantine.py script in the /usr/local/share/rspamd folder. Logs go to
       create 0640 quarantine quarantine
       missingok
   }
+```
 
 If you edit the quarantine.py script, you will find a configuration block, where you can specify the SQL settings and file/sql usage. The block ist documented.
 
@@ -83,6 +95,7 @@ metadata_exporter
 
 A sample configuration for this module might look like this:
 
+```rspamd
   metadata_exporter {
       rules {
           META_HTTP_1 {
@@ -94,6 +107,7 @@ A sample configuration for this module might look like this:
           }
       }
   }
+```
 
 See here for a full description of this module: https://rspamd.com/doc/modules/metadata_exporter.html
 
