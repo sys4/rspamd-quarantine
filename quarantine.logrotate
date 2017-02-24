@@ -1,0 +1,11 @@
+# Logrotate file for quarantine
+
+/var/log/quarantine/uwsgi.log {
+	compress
+	delaycompress
+	notifempty
+	daily
+	rotate 7
+	create 0640 quarantine quarantine
+	missingok
+}
