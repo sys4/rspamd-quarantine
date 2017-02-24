@@ -39,12 +39,12 @@ For Nginx a setup could look like this:
 
 ```nginx
   server {
-      ... other config options ...
+      # ... other config options ...
       location ~ /quarantine {
           include uwsgi_params;
           uwsgi_pass 127.0.0.1:9000;
       }
-  ...
+      # ... other config options ...
   }
 ```
 
