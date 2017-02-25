@@ -109,6 +109,41 @@ A sample configuration for this module might look like this:
   }
 ```
 
+If you want a quarantine only for viruses, you can define the symbols either in quarantine.py - or better - define a custom_select function in the metadata_exporter configuration. An example could look like this:
+
+```shell
+        custom_select {
+                viruses = <<EOD
+    return function(task)
+        -- Import logger function
+        local rspamd_logger = require "rspamd_logger"
+
+        -- Get all symbols for this mail
+        local symbols = task:get_symbols()
+
+        -- Iterate through the list of symbols and match certain wanted symbols
+        for _,symbol in ipairs(symbols) do
+            if symbol == "CLAMAV_VIRUS" then
+                rspamd_logger.infox(
+                    "metadata_exporter: found virus symbol CLAMAV_VIRUS")
+                return true
+            elseif symbol == "AVIRA_VIRUS" then
+                rspamd_logger.infox(
+                    "metadata_exporter: found virus symbol AVIRA_VIRUS")
+                return true
+            end
+        end
+
+        -- Nothing was found
+        rspamd_logger.infox("metadata_exporter: no virus symbol found")
+        return false
+    end
+    EOD;
+        }
+```
+
+You can now use the self-defined "viruses" selector instead of "is_reject".
+
 See here for a full description of this module: https://rspamd.com/doc/modules/metadata_exporter.html
 
 Have fun :)
