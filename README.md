@@ -81,6 +81,7 @@ Place the quarantine.py script in the /usr/local/share/rspamd folder. Logs go to
       rotate 7
       create 0640 quarantine quarantine
       missingok
+      copytruncate
   }
 ```
 
@@ -111,7 +112,7 @@ A sample configuration for this module might look like this:
 
 If you want a quarantine only for viruses, you can define the symbols either in quarantine.py - or better - define a custom_select function in the metadata_exporter configuration. An example could look like this:
 
-```shell
+```rspamd
         custom_select {
                 viruses = <<EOD
     return function(task)
@@ -143,6 +144,20 @@ If you want a quarantine only for viruses, you can define the symbols either in 
 ```
 
 You can now use the self-defined "viruses" selector instead of "is_reject".
+
+NOTE! If you wnat to collect viruses (possible you want to reject these mails), then you must not set the action in the antivirus module! Set it to something like "add_header" and use the force_actions module to trigger the actions there. Why? Because antivirus is a pre-filter module and metadata_exporter is not seeing rejected mails that were triggered by antivirus.
+
+Example force_actions:
+
+```rspamd
+	rules {
+		VIRUS_FOUND {
+			action = "reject";
+			expression = "CLAMAV_VIRUS | AVIRA_VIRUS";
+			message = "Rejected due to suspicion of virus";
+		}
+	}
+```
 
 See here for a full description of this module: https://rspamd.com/doc/modules/metadata_exporter.html
 
