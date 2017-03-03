@@ -32,10 +32,11 @@ __copyright__="Copyright (c) 2017 [*] sys4 AG"
 
 function usage() {
     cat << EOD
-$(basename $0) command queue-id [ recipient ]"
+$(basename $0) command [ queue-id ] [ recipient ]"
 
     command:
 
+    list            - Get a full list of all queue ids and the Envelope-From
     release         - Release an email from quarantine and send it to a recipient
     delete          - Delete an email from quarantine
     print           - Print out the content of an email
@@ -43,17 +44,21 @@ $(basename $0) command queue-id [ recipient ]"
 EOD
 }
 
+function need_snd_arg() {
+    if [[ -z "$2" ]]; then
+        usage
+        exit 1
+    else
+        QID=$2
+    fi
+}
+
 if [[ -z "$1" ]]; then
-    usage
-    exit 1
-fi
-if [[ -z "$2" ]]; then
     usage
     exit 1
 fi
 
 CMD=$1
-QID=$2
 
 if [[ "$#" -eq 3 ]]; then
     RCPT=$3
@@ -92,7 +97,17 @@ _psql="${psql} -At -h ${DBHOST} -d ${DBNAME} -U ${DBUSER}"
 _xxd="${xxd} -r -p"
 
 case "${CMD}" in
+    list)
+        echo "SELECT qid, \"from\" FROM meta;" | $_psql | \
+        while read qid from; do
+            echo -ne "${qid}\t\t"
+            echo "${from}" | $_xxd
+            echo
+        done
+        ;;
     release)
+        need_snd_arg
+
         if [[ -z "$RCPT" ]]; then
             usage
             exit 1
@@ -108,9 +123,13 @@ case "${CMD}" in
         fi
         ;;
     print)
+        need_snd_arg
+
         echo "SELECT content FROM msg WHERE qid='${QID}';" | $_psql
         ;;
     delete)
+        need_snd_arg
+
         echo "Do you really want to delete message with queue ID '${QID} (y/N)'?"
         read answer
 
@@ -123,6 +142,8 @@ case "${CMD}" in
         fi
         ;;
     meta)
+        need_snd_arg
+
         declare -i result
         result=$(echo "SELECT count(*) FROM meta WHERE qid='${QID}';" | $_psql)
 
