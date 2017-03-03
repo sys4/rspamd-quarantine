@@ -45,11 +45,9 @@ EOD
 }
 
 function need_snd_arg() {
-    if [[ -z "$2" ]]; then
+    if [[ -z "${QID}" ]]; then
         usage
         exit 1
-    else
-        QID=$2
     fi
 }
 
@@ -59,10 +57,8 @@ if [[ -z "$1" ]]; then
 fi
 
 CMD=$1
-
-if [[ "$#" -eq 3 ]]; then
-    RCPT=$3
-fi
+QID=$2
+RCPT=$3
 
 if [[ -z "${DBHOST}" ]]; then
     echo "No DBHOST var"
@@ -108,13 +104,13 @@ case "${CMD}" in
     release)
         need_snd_arg
 
-        if [[ -z "$RCPT" ]]; then
+        if [[ -z "${RCPT}" ]]; then
             usage
             exit 1
         fi
 
         echo "SELECT content FROM msg WHERE qid='${QID}';" | $_psql | \
-            ${formail} -s sendmail -oem -oi "$RCPT"
+            ${formail} -s sendmail -oem -oi "${RCPT}"
 
         if [[ "$?" -eq 0 ]]; then
             echo "Message '${QID}' released and sent to ${RCPT}"
@@ -147,7 +143,7 @@ case "${CMD}" in
         declare -i result
         result=$(echo "SELECT count(*) FROM meta WHERE qid='${QID}';" | $_psql)
 
-        if [[ "$result" -ne 0 ]]; then
+        if [[ "${result}" -ne 0 ]]; then
             echo "Timestamp:"
             echo "SELECT timestamp FROM meta WHERE qid='${QID}';" | $_psql
             echo
